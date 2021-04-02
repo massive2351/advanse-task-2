@@ -1,5 +1,6 @@
 class UsersController < ApplicationController
-  before_action :ensure_correct_user, only: [:update]
+  before_action :authenticate_user!
+  before_action :ensure_correct_user, only: [:update, :edit]
 
   def show
     @user = User.find(params[:id])
@@ -8,22 +9,34 @@ class UsersController < ApplicationController
   end
 
   def index
+    @user = current_user
     @users = User.all
     @book = Book.new
+    @books = Book.all
+  end
 
   def edit
     @user = User.find(params[:id])
+    if @user != current_user
+      redirect_to user_path(current_user), alert: "不正なアクセスです。"
+    end
+    
   end
 
   def update
+    @book = Book.new
+    @books = Book.all
+    
+    @user = current_user
     if @user.update(user_params)
-      redirect_to users_path(@user), notice: "You have updated user successfully."
+      redirect_to user_path(@user), notice: "You have updated user successfully."
     else
-      render "show"
+      render "edit"
     end
   end
 
   private
+
   def user_params
     params.require(:user).permit(:name, :introduction, :profile_image)
   end
@@ -34,4 +47,5 @@ class UsersController < ApplicationController
       redirect_to user_path(current_user)
     end
   end
+
 end
